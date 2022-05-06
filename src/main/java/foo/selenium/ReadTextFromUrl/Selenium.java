@@ -8,8 +8,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.Dimension;
@@ -18,10 +20,15 @@ import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.remote.DesiredCapabilities;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
+
+
 
 public class Selenium {
+	
 
 	WebDriver driver;
 
@@ -79,28 +86,32 @@ public class Selenium {
 	}
 
 	public void login(String user, String pass) throws Throwable {
-		driver.findElement(By.id("Email")).sendKeys(user);
-		driver.findElement(By.id("next")).click();
+		driver.findElement(By.cssSelector(".drive__hero-buttons a")).click();
+		Set<String> handles = driver.getWindowHandles();
+		handles.forEach(System.out::println);
+		
+		Iterator<String> it = handles.iterator();
+		it.next();
+		String nextP = it.next();
+		driver.switchTo().window(nextP);
+		
+		driver.findElement(By.id("identifierId")).sendKeys(user);
+		driver.findElement(By.id("identifierNext")).click();
 		ready();
-		Thread.sleep(2000);
-		driver.findElement(By.id("Passwd")).sendKeys(pass);
-		driver.findElement(By.id("signIn")).click();
+		driver.findElement(By.name("password")).sendKeys(pass);
+		driver.findElement(By.id("passwordNext")).click();
 	}
 
 	public void goTo(String url) throws Throwable {
-		driver.navigate().to(url);
+		driver.get(url);
 		ready();
 	}
 
 	public void run() throws IOException {
-		String currentLocation = new File(".").getCanonicalPath();
-		currentLocation = currentLocation.substring(0, currentLocation.lastIndexOf("\\"));
-		String driverPath = new File(currentLocation + File.separator + "drivers" + File.separator + "chrome"
-				+ File.separator + "win_chromedriver.exe").getAbsolutePath();
-		System.setProperty("webdriver.chrome.driver", driverPath);
-		DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-		WebDriver driver = new ChromeDriver(capabilities);
-		this.driver = driver;
+		WebDriverManager.chromedriver().setup();
+		
+		//ChromeOptions options = chromeOptions();
+		driver = new ChromeDriver();
 		putRigth();
 	}
 
@@ -115,7 +126,8 @@ public class Selenium {
 
 	private void ready() {
 		JavascriptExecutor js = (JavascriptExecutor) driver;
-		js.executeScript("return document.readyState").toString().equals("complete");
+		boolean isReady = js.executeScript("return document.readyState").toString().equals("complete");
+		System.out.println(isReady);
 	}
 
 	public void end() throws Throwable {
@@ -134,4 +146,20 @@ public class Selenium {
 		bw.close();
 	}
 
+	protected ChromeOptions chromeOptions() {
+		ChromeOptions options = new ChromeOptions();
+		options.addArguments("--incognito");
+		options.addArguments("--start-maximized");
+		options.addArguments("--no-sandbox");
+		options.addArguments("--disable-dev-shm-usage");
+
+		options.addArguments("enable-automation"); // https://stackoverflow.com/a/43840128/1689770
+		options.addArguments("--disable-infobars"); // https://stackoverflow.com/a/43840128/1689770
+		options.addArguments("--disable-browser-side-navigation"); // https://stackoverflow.com/a/49123152/1689770
+		options.addArguments("--disable-gpu"); // https://stackoverflow.com/questions/51959986/how-to-solve-selenium-chromedriver-timed-out-receiving-message-from-renderer-exc
+
+		options.setAcceptInsecureCerts(true); // apply if is needed access to wp without certs
+
+		return options;
+	}
 }

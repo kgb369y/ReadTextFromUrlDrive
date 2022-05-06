@@ -22,10 +22,10 @@ public class Test {
         teclado.close();
     	s.run();
         s.goTo(url);
-        Thread.sleep(3000);
+        
         s.login(user,pass);
         s.goTo(url2);
-        Thread.sleep(3000);
+        
         Map<String,String> res = s.getList();
         s.print(res, file);
         s.end();
